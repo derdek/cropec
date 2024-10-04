@@ -20,6 +20,7 @@ class User extends Authenticatable
         'name',
         'email',
         'password',
+        'role',
     ];
 
     /**
@@ -43,5 +44,35 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    public function isAdmin(): bool
+    {
+        return $this->role === 'admin';
+    }
+
+    public function isManager(): bool
+    {
+        return $this->role === 'manager';
+    }
+
+    public function isUser(): bool
+    {
+        return $this->role === 'user';
+    }
+
+    public function getUserDayoff()
+    {
+        return $this->hasMany(DayoffRequest::class);
+    }
+
+    public function getDayoffRequests()
+    {
+        return $this->hasMany(DayoffRequest::class, 'user_id', 'id');
+    }
+
+    public function getManagedDayoffRequests()
+    {
+        return $this->hasMany(DayoffRequest::class, 'answered_by', 'id');
     }
 }
