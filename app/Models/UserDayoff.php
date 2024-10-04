@@ -18,4 +18,14 @@ class UserDayoff extends Model
         'dayoff_type_id',
         'remaining_days',
     ];
+
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function dayoffType()
+    {
+        return $this->belongsTo(DayoffType::class);
+    }
 }
