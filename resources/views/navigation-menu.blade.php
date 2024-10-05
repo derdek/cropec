@@ -16,6 +16,28 @@
                         {{ __('Dashboard') }}
                     </x-nav-link>
                 </div>
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link href="{{ route('dayoff-requests') }}" :active="request()->routeIs('dayoff-requests')">
+                        {{ __('DayoffRequests') }}
+                    </x-nav-link>
+                </div>
+                @if (Auth::user()->hasRole('manager'))
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('dayoff-types') }}" :active="request()->routeIs('dayoff-types')">
+                            {{ __('DayoffTypes') }}
+                        </x-nav-link>
+                    </div>
+                    <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                        <x-nav-link href="{{ route('public-holidays') }}" :active="request()->routeIs('public-holidays')">
+                            {{ __('PublicHolidays') }}
+                        </x-nav-link>
+                    </div>
+                @endif
+                <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
+                    <x-nav-link href="{{ route('user-dayoffs') }}" :active="request()->routeIs('user-dayoffs')">
+                        {{ __('UserDayoffs') }}
+                    </x-nav-link>
+                </div>
             </div>
 
             <div class="hidden sm:flex sm:items-center sm:ms-6">

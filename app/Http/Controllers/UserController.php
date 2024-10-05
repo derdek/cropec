@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\DayoffRequest;
 use App\Models\DayoffType;
 use App\Models\PublicHoliday;
+use App\Models\User;
 use App\Models\UserDayoff;
 use Illuminate\Http\Request;
 
@@ -12,65 +13,23 @@ class UserController extends Controller
 {
     public function getDayoffTypes()
     {
-        return $this->prepareDayoffTypesResponse(DayoffType::all());
-    }
-
-    private function prepareDayoffTypesResponse($array)
-    {
-        $html = '<table>';
-        $html .= '<tr>';
-        $html .= '<th>Dayoff Type Name</th>';
-        $html .= '<th>Description</th>';
-        $html .= '<th>Days per year</th>';
-        $html .= '<th>Color</th>';
-        $html .= '</tr>';
-
-        foreach ($array as $record) {
-            $days = $record['default_days_per_year']
-                ?: 'unlimited';
-            $html .= '<tr>';
-            $html .= '<td>' . $record['name'] . '</td>';
-            $html .= '<td>' . $record['description'] . '</td>';
-            $html .= '<td>' . $days . '</td>';
-            $html .= '<td style="background-color:' . $record['color'] . '">' . $record['color'] . '</td>';
-            $html .= '</tr>';
-        }
-
-        $html .= '</table>';
-
-        return $html;
+        return view('dayofftypes', [
+            'dayoffTypes' => DayoffType::all()
+        ]);
     }
 
     public function getPublicHolidays()
     {
-        return $this->preparePublicHolidaysResponse(PublicHoliday::all());
-    }
-
-    private function preparePublicHolidaysResponse($array)
-    {
-        $html = '<table>';
-        $html .= '<tr>';
-        $html .= '<th>Public Holiday Name</th>';
-        $html .= '<th>Date</th>';
-        $html .= '</tr>';
-
-        foreach ($array as $record) {
-            $html .= '<tr>';
-            $html .= '<td>' . $record['name'] . '</td>';
-            $html .= '<td>' . $record['date'] . '</td>';
-            $html .= '</tr>';
-        }
-
-        $html .= '</table>';
-
-        return $html;
+        return view('publicholidays', [
+            'publicHolidays' => PublicHoliday::all()
+        ]);
     }
 
     public function getDayoffRequests()
     {
-        return $this->prepareDayoffRequestsResponse(
-            DayoffRequest::where('user_id', auth()->id())->get()
-        );
+        return view('dayoffrequests.dayoffrequests', [
+            'dayoffRequests' => DayoffRequest::where('user_id', auth()->id())->with('dayoffType')->get()
+        ]);
     }
 
     public function getManagedDayoffRequests()
@@ -78,61 +37,132 @@ class UserController extends Controller
         if (!auth()->user()->isManager()) {
             return 'You are not authorized to view this page.';
         }
-        return $this->prepareDayoffRequestsResponse(DayoffRequest::all());
-    }
-
-    private function prepareDayoffRequestsResponse($array)
-    {
-        $html = '<table>';
-        $html .= '<tr>';
-        $html .= '<th>Dayoff Request ID</th>';
-        $html .= '<th>Dayoff Type</th>';
-        $html .= '<th>Start Date</th>';
-        $html .= '<th>End Date</th>';
-        $html .= '<th>Status</th>';
-        $html .= '</tr>';
-
-        foreach ($array as $record) {
-            $html .= '<tr>';
-            $html .= '<td>' . $record['id'] . '</td>';
-            $html .= '<td>' . $record['dayoff_type_id'] . '</td>';
-            $html .= '<td>' . $record['start_date'] . '</td>';
-            $html .= '<td>' . $record['end_date'] . '</td>';
-            $html .= '<td>' . $record['status'] . '</td>';
-            $html .= '</tr>';
-        }
-
-        $html .= '</table>';
-
-        return $html;
+        return view('dayoffrequests', [
+            'dayoffRequests' => DayoffRequest::where('status', 'pending')->get()
+        ]);
     }
 
     public function getUserDayoffs()
     {
-        return $this->prepareUserDayoffsResponse(
-            UserDayoff::where('user_id', auth()->id())
-                ->with('dayoffType')
-                ->get()
-        );
+        return view('userdayoffs', [
+            'userDayoffs' => UserDayoff::where('user_id', auth()->id())->with('dayoffType')->get()
+        ]);
     }
 
-    private function prepareUserDayoffsResponse($array)
+    public function createDayoffRequestForm()
     {
-        $html = '<table>';
-        $html .= '<tr>';
-        $html .= '<th>Dayoff Type</th>';
-        $html .= '<th>Days Remaining</th>';
-        $html .= '</tr>';
+        return view('dayoffrequests.create',[
+            'dayoffTypes' => DayoffType::all()
+        ]);
+    }
 
-        foreach ($array as $record) {
-            $html .= '<tr>';
-            $html .= '<td>' . $record->dayoffType->name . '</td>';
-            $html .= '<td>' . $record->remaining_days . '</td>';
-            $html .= '</tr>';
+    public function createDayoffRequest(Request $request)
+    {
+        $request->validate([
+            'dayoff_type_id' => 'required|exists:dayoff_types,id',
+            'start_date' => 'required|date',
+            'end_date' => 'required|date',
+            'comment' => 'nullable|string',
+        ]);
+
+        $dayoffRequest = new DayoffRequest();
+        $dayoffRequest->user_id = auth()->id();
+        $dayoffRequest->dayoff_type_id = $request->dayoff_type_id;
+        $dayoffRequest->date_from = $request->start_date;
+        $dayoffRequest->date_to = $request->end_date;
+        $dayoffRequest->comment = $request->comment;
+        $dayoffRequest->status = 'pending';
+        $dayoffRequest->save();
+
+        return redirect()->route('dayoff-requests');
+    }
+
+    public function getDashboard()
+    {
+        return view('dashboard', [
+            'users' => User::paginate(20),
+            'userRole' => auth()->user()->role,
+        ]);
+    }
+
+    public function getUserEditPage($id)
+    {
+        $user = User::find($id);
+        $userDayoffs = UserDayoff::where('user_id', $id)->get();
+        return view('user.edit', [
+            'user' => $user,
+            'userDayoffs' => $userDayoffs,
+        ]);
+    }
+
+    public function updateUser(Request $request, $id)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'role' => 'required|in:admin,manager,user',
+        ]);
+
+        $user = User::find($id);
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role;
+        $user->save();
+
+        foreach ($request->dayoff as $dayoffTypeId => $days) {
+            $userDayoff = UserDayoff::where('user_id', $id)->where('dayoff_type_id', $dayoffTypeId)->first();
+            $userDayoff->remaining_days = $days;
+            $userDayoff->save();
         }
 
-        $html .= '</table>';
+        return redirect()->route('dashboard');
+    }
 
-        return $html;
+    public function getCreateUserPage()
+    {
+        return view('user.create', [
+            'dayoffTypes' => DayoffType::whereNotNull('default_days_per_year')->get()
+        ]);
+    }
+
+    public function createUserWithUserDayoffs(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'email' => 'required|email',
+            'role' => 'required|in:admin,manager,user',
+        ]);
+
+        $user = new User();
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role;
+        $user->password = bcrypt('changeMe123!');
+        $user->save();
+
+        foreach ($request->dayoff as $dayoffTypeId => $days) {
+            $userDayoff = new UserDayoff();
+            $userDayoff->user_id = $user->id;
+            $userDayoff->dayoff_type_id = $dayoffTypeId;
+            $userDayoff->remaining_days = $days;
+            $userDayoff->save();
+        }
+
+        return redirect()->route('dashboard');
+    }
+
+    public function createPublicHoliday(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'date' => 'required|date',
+        ]);
+
+        $publicHoliday = new PublicHoliday();
+        $publicHoliday->name = $request->name;
+        $publicHoliday->date = $request->date;
+        $publicHoliday->save();
+
+        return redirect()->route('public-holidays');
     }
 }

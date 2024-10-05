@@ -24,7 +24,7 @@ class DayoffRequest extends Model
         'answered_comment',
     ];
 
-    public function getDayoffType()
+    public function dayoffType()
     {
         return $this->belongsTo(DayoffType::class);
     }
