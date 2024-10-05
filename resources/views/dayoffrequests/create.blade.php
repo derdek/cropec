@@ -12,9 +12,8 @@
                     @csrf
 
                     <div>
-                        <x-label for="dayoff_type_id" :value="__('Dayoff Type')" />
-
-                        <select id="dayoff_type_id" class="block mt-1 w-full" name="dayoff_type_id" :value="old('dayoff_type_id')" required>
+                        <label for="dayoff_type_id" :value="__('Dayoff Type')"></label>
+                        <select id="dayoff_type_id" class="block mt-1 w-full" name="dayoff_type_id" required>
                             @foreach ($dayoffTypes as $dayoffType)
                                 <option value="{{ $dayoffType->id }}">{{ $dayoffType->name }}</option>
                             @endforeach
