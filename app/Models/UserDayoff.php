@@ -9,6 +9,10 @@ use Illuminate\Database\Eloquent\Model;
  * Це many to one зв'язок між користувачем та неробочими днями
  * У користувача може бути декілька видів не робочих днів
  */
+
+/**
+ * @mi
+ */
 class UserDayoff extends Model
 {
     use HasFactory;

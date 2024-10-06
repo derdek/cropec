@@ -2,7 +2,9 @@
 
 namespace App\Actions\Fortify;
 
+use App\Models\DayoffType;
 use App\Models\User;
+use App\Models\UserDayoff;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
 use Laravel\Fortify\Contracts\CreatesNewUsers;
@@ -26,10 +28,21 @@ class CreateNewUser implements CreatesNewUsers
             'terms' => Jetstream::hasTermsAndPrivacyPolicyFeature() ? ['accepted', 'required'] : '',
         ])->validate();
 
-        return User::create([
+        $user = User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
+
+        $dayOffTypes = DayoffType::whereNotNull('default_days_per_year')->get();
+        foreach ($dayOffTypes as $dayOffType) {
+            $userDayoff = new UserDayoff();
+            $userDayoff->user_id = $user->id;
+            $userDayoff->dayoff_type_id = $dayOffType->id;
+            $userDayoff->remaining_days = $dayOffType->default_days_per_year;
+            $userDayoff->save();
+        }
+
+        return $user;
     }
 }

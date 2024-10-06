@@ -21,15 +21,15 @@
                     </div>
 
                     <div class="mt-4">
-                        <x-label for="start_date" :value="__('Start Date')" />
+                        <x-label for="date_from" :value="__('Start Date')" />
 
-                        <x-input id="start_date" class="block mt-1 w-full" type="date" name="start_date" :value="old('start_date')" required />
+                        <x-input id="date_from" class="block mt-1 w-full" type="date" name="date_from" required />
                     </div>
 
                     <div class="mt-4">
-                        <x-label for="end_date" :value="__('End Date')" />
+                        <x-label for="date_to" :value="__('End Date')" />
 
-                        <x-input id="end_date" class="block mt-1 w-full" type="date" name="end_date" :value="old('end_date')" required />
+                        <x-input id="date_to" class="block mt-1 w-full" type="date" name="date_to" required />
                     </div>
 
                     <div class="flex items-center justify-end mt-4">

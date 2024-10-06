@@ -29,4 +29,6 @@ Route::middleware([
     Route::get('/user-dayoffs', [UserController::class, 'getUserDayoffs'])->name('user-dayoffs');
     Route::get('/create-dayoff-request', [UserController::class, 'createDayoffRequestForm'])->name('create-dayoff-request-form');
     Route::post('/create-dayoff-request', [UserController::class, 'createDayoffRequest'])->name('create-dayoff-request');
+
+    Route::get('/calendar', [UserController::class, 'getCalendar'])->name('calendar');
 });
