@@ -34,15 +34,6 @@ class CreateNewUser implements CreatesNewUsers
             'password' => Hash::make($input['password']),
         ]);
 
-        $dayOffTypes = DayoffType::whereNotNull('default_days_per_year')->get();
-        foreach ($dayOffTypes as $dayOffType) {
-            $userDayoff = new UserDayoff();
-            $userDayoff->user_id = $user->id;
-            $userDayoff->dayoff_type_id = $dayOffType->id;
-            $userDayoff->remaining_days = $dayOffType->default_days_per_year;
-            $userDayoff->save();
-        }
-
         return $user;
     }
 }

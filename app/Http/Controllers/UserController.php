@@ -80,7 +80,7 @@ class UserController extends Controller
         }
 
         $userDayoff = UserDayoff::where('user_id', auth()->id())->where('dayoff_type_id', $request->dayoff_type_id)->first();
-        if ($userDayoff->remaining_days < $dayoffCost) {
+        if ($userDayoff && !is_null($userDayoff->remaining_days) && $userDayoff->remaining_days < $dayoffCost) {
             return redirect()->back()->withErrors(['dayoff_type_id' => 'Not enough days left.']);
         }
 
@@ -93,8 +93,12 @@ class UserController extends Controller
         $dayoffRequest->status = 'approved';
         $dayoffRequest->saveOrFail();
 
-        $userDayoff->remaining_days -= $dayoffCost;
-        $userDayoff->save();
+        if ($userDayoff) {
+            if (!is_null($userDayoff->remaining_days)) {
+                $userDayoff->remaining_days -= $dayoffCost;
+            }
+            $userDayoff->save();
+        }
 
         return redirect()->route('dayoff-requests');
     }
@@ -106,6 +110,7 @@ class UserController extends Controller
         while ($curMonth > 12){
             $curMonth -= 12;
         }
+        $today = Carbon::now();
         $holidays = PublicHoliday::where('date', '>=', Carbon::create($calendar['year'], $curMonth)->subMonth()->startOfMonth())
             ->where('date', '<=', Carbon::create($calendar['year'], $curMonth)->addMonth()->endOfMonth())
             ->get();
@@ -113,18 +118,80 @@ class UserController extends Controller
         foreach ($holidays as $holiday) {
             $holidaysArray[$holiday->date] = $holiday->name;
         }
+        $dayoffTypes = DayoffType::all();
+        $dayoffTypeColors = [];
+        foreach ($dayoffTypes as $dayoffType) {
+            $dayoffTypeColors[$dayoffType->id] = $dayoffType->color;
+        }
         return view('dashboard', [
             'users' => User::paginate(20),
             'userRole' => auth()->user()->role,
             'roles' => ['admin', 'manager', 'user'],
             'userDayoff' => UserDayoff::where('user_id', auth()->id())->where('dayoff_type_id', 1)->first(),
+            'dayoffTypeColors' => $dayoffTypeColors,
             'calendar' => $calendar['calendar'],
             'month' => $calendar['month'],
             'curMonth' => $curMonth,
             'year' => $calendar['year'],
             'dayoffs' => $calendar['approvedDayoffs'],
             'holidays' => $holidaysArray,
+            'today' => $today,
         ]);
+    }
+
+    public function getDayoffTypePage($dayoffTypeId)
+    {
+        return view('dayofftypes.edit', [
+            'dayoffType' => DayoffType::find($dayoffTypeId)
+        ]);
+    }
+
+    public function deleteDayoffType($dayoffTypeId)
+    {
+        $dayoffType = DayoffType::find($dayoffTypeId);
+        $dayoffType->delete();
+        return redirect()->route('dayofftypes');
+    }
+
+    public function updateDayoffType(Request $request, $dayoffTypeId)
+    {
+        $request->validate([
+            'name' => 'required|string',
+        ]);
+
+        $dayoffType = DayoffType::find($dayoffTypeId);
+        $dayoffType->name = $request->name;
+        $dayoffType->description = $request->description;
+        $dayoffType->default_days_per_year = $request->default_days_per_year;
+        $dayoffType->color = $request->color;
+        $dayoffType->save();
+
+        return redirect()->route('dayofftypes');
+    }
+
+    public function createDayoffType(Request $request)
+    {
+        $request->validate([
+            'name' => 'required|string',
+            'description' => 'nullable|string',
+            'default_days_per_year' => 'nullable|numeric',
+            'color' => 'required|string',
+        ]);
+
+        $dayoffType = new DayoffType([
+            'name' => $request->name,
+            'description' => $request->description,
+            'default_days_per_year' => $request->default_days_per_year,
+            'color' => $request->color,
+        ]);
+        $dayoffType->save();
+
+        return redirect()->route('dayofftypes');
+    }
+
+    public function getDayoffTypeCreatePage()
+    {
+        return view('dayofftypes.create');
     }
 
     public function getUserEditPage($id)
@@ -225,17 +292,17 @@ class UserController extends Controller
         $firstDayOfMonth = Carbon::create($year, $month)->startOfMonth()->dayOfWeekIso; // Start from Monday
 
         $approvedDayoffsDB = DayoffRequest::where('status', 'approved')
-            ->where('date_from', '>=', Carbon::create($year, $month)->startOfMonth())
-            ->where('date_to', '<=', Carbon::create($year, $month)->endOfMonth())
+            ->where('user_id', auth()->id())
+            ->where('date_from', '>=', Carbon::create($year, $month)->startOfYear()->startOfMonth())
+            ->where('date_to', '<=', Carbon::create($year, $month)->endOfYear()->endOfMonth())
             ->get();
 
-        // create a list with keys as Carbon dates from date_from and date_to
         $approvedDayoffs = [];
         foreach ($approvedDayoffsDB as $dayoff) {
             $dateFrom = Carbon::create($dayoff->date_from);
             $dateTo = Carbon::create($dayoff->date_to);
             while ($dateFrom->lte($dateTo)) {
-                $approvedDayoffs[] = $dateFrom->toDateString();
+                $approvedDayoffs[$dateFrom->toDateString()] = $dayoff->dayoff_type_id;
                 $dateFrom->addDay();
             }
         }

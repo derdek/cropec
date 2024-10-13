@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\GoogleLoginController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -22,7 +23,14 @@ Route::middleware([
     Route::view('/public-holiday', 'publicholidays.create')->name('publicholiday-create');
     Route::post('/public-holiday', [UserController::class, 'createPublicHoliday'])->name('publicholiday-create-form');
 
-    Route::get('/dayoff-types', [UserController::class, 'getDayoffTypes'])->name('dayoff-types');
+    Route::get('/dayoff-types', [UserController::class, 'getDayoffTypes'])->name('dayofftypes');
+    Route::get('/dayoff-types/create', [UserController::class, 'getDayoffTypeCreatePage'])->name('dayofftypes.createform');
+    Route::get('/dayoff-types/{dayoffTypeId}', [UserController::class, 'getDayoffTypePage'])->name('dayofftypes.edit');
+    Route::put('/dayoff-types/{dayoffTypeId}', [UserController::class, 'updateDayoffType'])->name('dayofftypes.update');
+    Route::delete('/dayoff-types/{dayoffTypeId}', [UserController::class, 'deleteDayoffType'])->name('dayofftypes.delete');
+    Route::post('/dayoff-types', [UserController::class, 'createDayoffType'])->name('dayofftypes.store');
+
+
     Route::get('/public-holidays', [UserController::class, 'getPublicHolidays'])->name('public-holidays');
     Route::get('/dayoff-requests', [UserController::class, 'getDayoffRequests'])->name('dayoff-requests');
     Route::get('/dayoff-new-requests', [UserController::class, 'getManagedDayoffRequests'])->name('dayoff-new-requests');

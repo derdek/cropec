@@ -96,15 +96,23 @@
                                                 <td class="p-2 border-b text-center aspect-square">
                                                     @php
                                                     $todayIsHoliday = in_array($day->toDateString(), array_keys($holidays));
-                                                    $backColor = '';
-                                                    $backColor = $todayIsHoliday ? 'bg-yellow-500' : $backColor;
-                                                    $backColor = in_array($day->toDateString(), $dayoffs) ? 'bg-blue-500' : $backColor;
+                                                    $backColorClass = '';
+                                                    $backColorStyle = '';
+                                                    $isDayoff = in_array($day->toDateString(), array_keys($dayoffs));
 
+                                                    if ($isDayoff) {
+                                                        $backColorStyle = 'background-color: ' . $dayoffTypeColors[$dayoffs[$day->toDateString()]];
+                                                    } else {
+                                                        $backColorClass = $todayIsHoliday ? 'bg-yellow-500' : $backColorClass;
+                                                        $backColorClass = $day->toDateString() == $today->toDateString()
+                                                            ? 'bg-gray-500'
+                                                            : $backColorClass;
+                                                    }
                                                     @endphp
                                                     @if ($todayIsHoliday)
                                                     <div class="group flex relative">
                                                     @endif
-                                                        <div class="{{ $backColor }} rounded-full h-6 w-6 mx-auto">
+                                                        <div class="{{ $backColorClass }} rounded-full h-6 w-6 mx-auto" style="{{ $backColorStyle }}">
                                                             @php
                                                                 $textColor = 'text-black';
 

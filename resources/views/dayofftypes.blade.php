@@ -3,6 +3,10 @@
         <h2 class="font-semibold text-xl text-gray-800 leading-tight">
             {{ __('DayoffTypes') }}
         </h2>
+
+        @if (Auth::user()->isManager())
+            <a href="{{ route('dayofftypes.createform') }}" class="text-indigo-600 hover:text-indigo-900">Create</a>
+        @endif
     </x-slot>
 
     <div class="py-12">
@@ -26,6 +30,11 @@
                             <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                                 Color
                             </th>
+                            @if (Auth::user()->isManager())
+                                <th scope="col" class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                    Actions
+                                </th>
+                            @endif
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
@@ -48,6 +57,11 @@
                                         {{ $dayoffType->color }}
                                     </div>
                                 </td>
+                                @if (Auth::user()->isManager())
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <a href="{{ route('dayofftypes.edit', $dayoffType->id) }}" class="text-indigo-600 hover:text-indigo-900">Edit</a>
+                                    </td>
+                                @endif
                             </tr>
                         @endforeach
                     </tbody>

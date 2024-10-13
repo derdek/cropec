@@ -23,7 +23,7 @@
                 </div>
                 @if (Auth::user()->hasRole('manager'))
                     <div class="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                        <x-nav-link href="{{ route('dayoff-types') }}" :active="request()->routeIs('dayoff-types')">
+                        <x-nav-link href="{{ route('dayofftypes') }}" :active="request()->routeIs('dayofftypes')">
                             {{ __('DayoffTypes') }}
                         </x-nav-link>
                     </div>
