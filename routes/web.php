@@ -38,3 +38,6 @@ Route::middleware([
     Route::get('/create-dayoff-request', [UserController::class, 'createDayoffRequestForm'])->name('create-dayoff-request-form');
     Route::post('/create-dayoff-request', [UserController::class, 'createDayoffRequest'])->name('create-dayoff-request');
 });
+
+Route::get('/login/google', [GoogleLoginController::class, 'redirectToGoogle'])->name('auth.google');
+Route::get('/login/google/callback', [GoogleLoginController::class, 'handleGoogleCallback']);
