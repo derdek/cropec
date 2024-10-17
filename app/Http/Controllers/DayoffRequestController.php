@@ -13,7 +13,7 @@ class DayoffRequestController extends Controller
 {
     public function createDayoffRequestForm()
     {
-        return view('dayoffrequests.create',[
+        return view('dayoffrequests.create', [
             'dayoffTypes' => DayoffType::all()
         ]);
     }
@@ -40,7 +40,9 @@ class DayoffRequestController extends Controller
             $dateFrom->addDay();
         }
 
-        $userDayoff = UserDayoff::where('user_id', auth()->id())->where('dayoff_type_id', $request->dayoff_type_id)->first();
+        $userDayoff = UserDayoff::where('user_id', auth()->id())
+            ->where('dayoff_type_id', $request->dayoff_type_id)
+            ->first();
         if ($userDayoff && !is_null($userDayoff->remaining_days) && $userDayoff->remaining_days < $dayoffCost) {
             return redirect()->back()->withErrors(['dayoff_type_id' => 'Not enough days left.']);
         }

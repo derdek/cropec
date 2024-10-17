@@ -15,11 +15,15 @@ class DashboardController extends Controller
     {
         $calendar = $this->getCalendar();
         $curMonth = $calendar['month'];
-        while ($curMonth > 12){
+        while ($curMonth > 12) {
             $curMonth -= 12;
         }
         $today = Carbon::now();
-        $holidays = PublicHoliday::where('date', '>=', Carbon::create($calendar['year'], $curMonth)->subMonth()->startOfMonth())
+        $holidays = PublicHoliday::where(
+            'date',
+            '>=',
+            Carbon::create($calendar['year'], $curMonth)->subMonth()->startOfMonth()
+        )
             ->where('date', '<=', Carbon::create($calendar['year'], $curMonth)->addMonth()->endOfMonth())
             ->get();
         $holidaysArray = [];
