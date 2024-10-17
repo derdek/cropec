@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\Models\UserDayoff;
-use Illuminate\Http\Request;
 
 class UserDayoffController extends Controller
 {

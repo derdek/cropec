@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\DayoffRequestController;
 use App\Http\Controllers\DayoffTypeController;
 use App\Http\Controllers\GoogleLoginController;
@@ -17,7 +18,7 @@ Route::middleware([
     config('jetstream.auth_session'),
     'verified',
 ])->group(function () {
-    Route::get('/dashboard', [UserController::class, 'getDashboard'])->name('dashboard');
+    Route::get('/dashboard', [DashboardController::class, 'getDashboard'])->name('dashboard');
 
     Route::get('/user-edit/{id}', [UserController::class, 'getUserEditPage'])->name('user-edit');
     Route::post('/user-update/{id}', [UserController::class, 'updateUser'])->name('user-update');
