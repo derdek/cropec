@@ -12,97 +12,6 @@ use Illuminate\Http\Request;
 
 class UserController extends Controller
 {
-    public function getDayoffTypes()
-    {
-        return view('dayofftypes', [
-            'dayoffTypes' => DayoffType::all()
-        ]);
-    }
-
-    public function getPublicHolidays()
-    {
-        return view('publicholidays', [
-            'publicHolidays' => PublicHoliday::all()
-        ]);
-    }
-
-    public function getDayoffRequests()
-    {
-        return view('dayoffrequests.dayoffrequests', [
-            'dayoffRequests' => DayoffRequest::where('user_id', auth()->id())->with('dayoffType')->get()
-        ]);
-    }
-
-    public function getManagedDayoffRequests()
-    {
-        if (!auth()->user()->isManager()) {
-            return 'You are not authorized to view this page.';
-        }
-        return view('dayoffrequests', [
-            'dayoffRequests' => DayoffRequest::where('status', 'pending')->get()
-        ]);
-    }
-
-    public function getUserDayoffs()
-    {
-        return view('userdayoffs', [
-            'userDayoffs' => UserDayoff::where('user_id', auth()->id())->with('dayoffType')->get()
-        ]);
-    }
-
-    public function createDayoffRequestForm()
-    {
-        return view('dayoffrequests.create',[
-            'dayoffTypes' => DayoffType::all()
-        ]);
-    }
-
-    public function createDayoffRequest(Request $request)
-    {
-        $request->validate([
-            'dayoff_type_id' => 'required|exists:dayoff_types,id',
-            'date_from' => 'required|date',
-            'date_to' => 'required|date',
-            'comment' => 'nullable|string',
-        ]);
-
-        $publicHolidaysInsideDayoffs = PublicHoliday::where('date', '>=', $request->date_from)
-            ->where('date', '<=', $request->date_to)
-            ->get();
-        $dayoffCost = 0;
-        $dateFrom = Carbon::create($request->date_from);
-        $dateTo = Carbon::create($request->date_to);
-        while ($dateFrom->lte($dateTo)) {
-            if (!$dateFrom->isWeekend() && !$publicHolidaysInsideDayoffs->contains('date', $dateFrom->toDateString())) {
-                $dayoffCost++;
-            }
-            $dateFrom->addDay();
-        }
-
-        $userDayoff = UserDayoff::where('user_id', auth()->id())->where('dayoff_type_id', $request->dayoff_type_id)->first();
-        if ($userDayoff && !is_null($userDayoff->remaining_days) && $userDayoff->remaining_days < $dayoffCost) {
-            return redirect()->back()->withErrors(['dayoff_type_id' => 'Not enough days left.']);
-        }
-
-        $dayoffRequest = new DayoffRequest();
-        $dayoffRequest->user_id = auth()->id();
-        $dayoffRequest->dayoff_type_id = $request->dayoff_type_id;
-        $dayoffRequest->date_from = $request->date_from;
-        $dayoffRequest->date_to = $request->date_to;
-        $dayoffRequest->comment = $request->comment;
-        $dayoffRequest->status = 'approved';
-        $dayoffRequest->saveOrFail();
-
-        if ($userDayoff) {
-            if (!is_null($userDayoff->remaining_days)) {
-                $userDayoff->remaining_days -= $dayoffCost;
-            }
-            $userDayoff->save();
-        }
-
-        return redirect()->route('dayoff-requests');
-    }
-
     public function getDashboard()
     {
         $calendar = $this->getCalendar();
@@ -137,61 +46,6 @@ class UserController extends Controller
             'holidays' => $holidaysArray,
             'today' => $today,
         ]);
-    }
-
-    public function getDayoffTypePage($dayoffTypeId)
-    {
-        return view('dayofftypes.edit', [
-            'dayoffType' => DayoffType::find($dayoffTypeId)
-        ]);
-    }
-
-    public function deleteDayoffType($dayoffTypeId)
-    {
-        $dayoffType = DayoffType::find($dayoffTypeId);
-        $dayoffType->delete();
-        return redirect()->route('dayofftypes');
-    }
-
-    public function updateDayoffType(Request $request, $dayoffTypeId)
-    {
-        $request->validate([
-            'name' => 'required|string',
-        ]);
-
-        $dayoffType = DayoffType::find($dayoffTypeId);
-        $dayoffType->name = $request->name;
-        $dayoffType->description = $request->description;
-        $dayoffType->default_days_per_year = $request->default_days_per_year;
-        $dayoffType->color = $request->color;
-        $dayoffType->save();
-
-        return redirect()->route('dayofftypes');
-    }
-
-    public function createDayoffType(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'description' => 'nullable|string',
-            'default_days_per_year' => 'nullable|numeric',
-            'color' => 'required|string',
-        ]);
-
-        $dayoffType = new DayoffType([
-            'name' => $request->name,
-            'description' => $request->description,
-            'default_days_per_year' => $request->default_days_per_year,
-            'color' => $request->color,
-        ]);
-        $dayoffType->save();
-
-        return redirect()->route('dayofftypes');
-    }
-
-    public function getDayoffTypeCreatePage()
-    {
-        return view('dayofftypes.create');
     }
 
     public function getUserEditPage($id)
@@ -258,21 +112,6 @@ class UserController extends Controller
         }
 
         return redirect()->route('dashboard');
-    }
-
-    public function createPublicHoliday(Request $request)
-    {
-        $request->validate([
-            'name' => 'required|string',
-            'date' => 'required|date',
-        ]);
-
-        $publicHoliday = new PublicHoliday();
-        $publicHoliday->name = $request->name;
-        $publicHoliday->date = $request->date;
-        $publicHoliday->save();
-
-        return redirect()->route('public-holidays');
     }
 
     public function getCalendar()
