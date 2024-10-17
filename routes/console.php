@@ -6,3 +6,7 @@ use Illuminate\Support\Facades\Artisan;
 Artisan::command('inspire', function () {
     $this->comment(Inspiring::quote());
 })->purpose('Display an inspiring quote')->hourly();
+
+Artisan::command('app:notify-about-birthday', function () {
+    Artisan::call('app:notify-about-birthday');
+})->daily()->at('9:00');
